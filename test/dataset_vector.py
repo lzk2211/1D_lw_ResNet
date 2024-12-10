@@ -26,7 +26,7 @@ class CustomDataset(Dataset):
         return image, label
 
 
-def data_set_split(image_path):
+def data_set_split(image_path, batch_size ,nw):
 
     # 读取所有图像文件路径和标签
     file_paths = []
@@ -94,4 +94,16 @@ def data_set_split(image_path):
     # print(f"验证集大�?: {len(validate_dataset)}")
     # print(f"测试集大�?: {len(test_dataset)}")
 
-    return train_dataset, validate_dataset, test_dataset, labels__
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=nw)
+    validate_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, num_workers=nw)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=nw)
+    train_num = len(train_dataset)
+    val_num = len(validate_dataset)
+    test_num = len(test_dataset)
+    
+    print('Using {} dataloader workers every process'.format(nw))
+    print(f"Training samples: {train_num}")
+    print(f"Validation samples: {val_num}")
+    print(f"Testing samples: {test_num}")
+
+    return train_loader, validate_loader, test_loader, labels__

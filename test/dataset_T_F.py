@@ -5,6 +5,8 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 import torchvision.transforms.functional as F
+import numpy as np
+from torchvision import transforms
 
 class CustomDataset(Dataset):
     def __init__(self, file_paths, labels, transform=None):
@@ -20,12 +22,34 @@ class CustomDataset(Dataset):
         label = self.labels[idx]
         if self.transform:
             image = self.transform(image)
-        return image, label
-   
-# 配置路径和参�?
-# image_path = '/root/autodl-tmp/lzk/D00/data_set_all'
 
-def data_set_split(image_path, batch_size, nw):
+        image = image[0,:,:].unsqueeze(0)
+        freq_seq = torch.squeeze(torch.sum(image, dim=2, keepdim=True)).unsqueeze(0)
+        time_seq = torch.squeeze(torch.sum(image, dim=1, keepdim=True)).unsqueeze(0)
+
+        # import matplotlib.pyplot as plt
+        # # Assuming you have already defined `time_seq` and `freq_seq`
+
+        # # Plotting time_seq
+        # plt.figure()
+        # plt.plot(time_seq[0, :])
+        # plt.title('Last Dimension of time_seq')
+        # plt.xlabel('Index')
+        # plt.ylabel('Value')
+        # plt.show()
+
+        # # Plotting freq_seq
+        # plt.figure()
+        # plt.plot(freq_seq[0, :])
+        # plt.title('Last Dimension of freq_seq')
+        # plt.xlabel('Index')
+        # plt.ylabel('Value')
+        # plt.show()
+        # exit()
+        return time_seq, freq_seq, label
+
+
+def data_set_split(image_path, batch_size ,nw):
 
     # 读取所有图像文件路径和标签
     file_paths = []
@@ -58,27 +82,29 @@ def data_set_split(image_path, batch_size, nw):
     # 再划分验证集和测试集
     val_paths, test_paths, val_labels, test_labels = train_test_split(temp_paths, temp_labels, test_size=(test_ratio / (test_ratio + val_ratio)), random_state=42)
 
-    img_size = 224
     # 创建数据变换
     data_transform = {# �ж�ʧ��Ϣ�Ŀ��ܣ������Ż�
         "train": transforms.Compose([
-            transforms.Resize(img_size),
-            transforms.CenterCrop(img_size),
+            # transforms.Resize(224),
+            # transforms.CenterCrop(224),
             # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            # transforms.Lambda(lambda x: torch.squeeze(torch.sum(x, dim=2, keepdim=True)))  # image = torch.squeeze(torch.sum(image, dim=2, keepdim=True))由此句修改
         ]),
         "val": transforms.Compose([
-            transforms.Resize(img_size),
-            transforms.CenterCrop(img_size),
+            # transforms.Resize(224),
+            # transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            # transforms.Lambda(lambda x: torch.squeeze(torch.sum(x, dim=2, keepdim=True)))  # ????
         ]),
         "test": transforms.Compose([
-            transforms.Resize(img_size),
-            transforms.CenterCrop(img_size),
+            # transforms.Resize(224),
+            # transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            # transforms.Lambda(lambda x: torch.squeeze(torch.sum(x, dim=2, keepdim=True)))  # ????
         ])
     }
 
@@ -103,4 +129,4 @@ def data_set_split(image_path, batch_size, nw):
     print(f"Validation samples: {val_num}")
     print(f"Testing samples: {test_num}")
 
-    return train_loader, validate_loader, test_loader, labels__
+    return train_loader, validate_loader, test_loader, train_num, val_num, test_num, labels__

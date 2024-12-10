@@ -16,7 +16,7 @@ import torchvision.models as models
 
 from resnet import resnet18
 from resnet_vector_group import resnet18_vector_group, resnet10_vector_group
-
+from TFMS_CNN import TFMS_CNN_Case3
 
 from confusionMatrix import ConfusionMatrix
 
@@ -29,10 +29,11 @@ import matplotlib.cm as cm
 
 # from spikingjelly.activation_based import ann2snn
 
-from dataset_vector import data_set_split
+# from dataset_vector import data_set_split
 # from dataset import data_set_split
+from dataset_T_F import data_set_split
+
 from torchsummary import summary
-import time
 from sklearn.manifold import TSNE
 
 
@@ -44,20 +45,20 @@ def release_gpu_memory():
 def main():
     # /root/miniconda3/bin/python /root/autodl-tmp/lzk/test/main.py --model_path 'ANN22_model.pth' --Train True --Test True --name ANN22
     parser = argparse.ArgumentParser(description="Train a localization model")
-    parser.add_argument('--epochs', type=int, default=120, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=200, help='Number of training epochs')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
     # 娣诲姞鍏朵粬鍙傛暟
     parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
     parser.add_argument('--model_path', type=str, default='model.pth', help='Path to save the model')
     # parser.add_argument('--runs', type=str, default='runs_Resnet10_model', help='Loss runing graph')
-    parser.add_argument('--Train', type=bool, default=False, help='Switch wheater to train')
+    parser.add_argument('--Train', type=bool, default=True, help='Switch wheater to train')
     parser.add_argument('--Test', type=bool, default=True, help='Test the test_loader use trained model')
-    parser.add_argument('--TSNE', type=bool, default=True, help='The t-SNE Visualisation')
+    parser.add_argument('--TSNE', type=bool, default=False, help='The t-SNE Visualisation')
     # parser.add_argument('--spikingjelly_ann2snn', type=bool, default=False, help='Converter ann2snn')
 
-    parser.add_argument('--class_num', type=int, default=8, help='class number')
-    parser.add_argument('--model', type=str, default='1d_lw_resnet18', help='switch model')
-    parser.add_argument('--image_path', type=str, default='F:\\D01\\data_set_1024_1024', help='dataset path')
+    parser.add_argument('--class_num', type=int, default=10, help='class number')
+    parser.add_argument('--model', type=str, default='TFMS_CNN', help='switch model')
+    parser.add_argument('--image_path', type=str, default='F:\\D00\\data_set_1024_1024', help='dataset path')
     # parser.add_argument('--name', type=str, default='D01_1024_1024', help='project name')
     parser.add_argument('--T', type=int, default=50, help='sim steps')
 
@@ -65,6 +66,13 @@ def main():
     print(args)
 
     release_gpu_memory()# 释放GPU内存
+
+    if sys.platform.startswith('linux'):
+        system=0
+    elif sys.platform.startswith('win'):
+        system=1
+
+    torch.manual_seed(42)
 
     # if you have GPU, the device will be cuda
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -92,21 +100,10 @@ def main():
     image_path = args.image_path
     assert os.path.exists(image_path), "{} path does not exist.".format(image_path)
 
-    train_dataset, validate_dataset, test_dataset, labels__ = data_set_split(image_path)
+    train_loader, validate_loader, test_loader, train_num, val_num, test_num, labels__ = data_set_split(image_path, batch_size, nw)
     print(labels__)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=nw)
-    validate_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, num_workers=nw)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=nw)
-    train_num = len(train_dataset)
-    val_num = len(validate_dataset)
-    test_num = len(test_dataset)
-    
-    print('Using {} dataloader workers every process'.format(nw))
-    print(f"Training samples: {train_num}")
-    print(f"Validation samples: {val_num}")
-    print(f"Testing samples: {test_num}")
 
-    torch.manual_seed(42)
+
     # Update the model to fit your input size and number of classes
     if args.model == 'resnet18_pre':
         model = models.resnet18(weights=True)
@@ -124,7 +121,11 @@ def main():
     elif args.model == 'googlenet':
         model = models.googlenet(weights=True)
         model.fc = nn.Linear(model.fc.in_features, args.class_num)
+    elif args.model == 'TFMS_CNN':
+        model = TFMS_CNN_Case3(num_classes=args.class_num, dropout_rate=0)
     model.to(device)
+
+    # This script is used to show the model structure
     # summary(model,input_size=(3,224))
     # exit()
     # # set first layer weight to ones
@@ -154,9 +155,10 @@ def main():
             running_loss = 0.0
             train_bar = tqdm(train_loader, file=sys.stdout)
             for step, data in enumerate(train_bar):
-                images, labels = data
+                time_seq, freq_seq, labels = data
+                img = torch.cat((time_seq, freq_seq), dim=-1).to(device)
                 optimizer.zero_grad()
-                outputs = model(images.to(device))
+                outputs = model(img)
                 loss = loss_function(outputs, labels.to(device))
                 loss.backward()
                 optimizer.step()
@@ -171,8 +173,9 @@ def main():
             with torch.no_grad():
                 val_bar = tqdm(validate_loader, file=sys.stdout)
                 for val_data in val_bar:
-                    val_images, val_labels = val_data
-                    outputs = model(val_images.to(device))
+                    time_seq, freq_seq, val_labels = val_data
+                    img = torch.cat((time_seq, freq_seq), dim=-1).to(device)
+                    outputs = model(img)
                     predict_y = torch.max(outputs, dim=1)[1]
                     acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
                     val_bar.desc = "Valid epoch[{}/{}]".format(epoch + 1, epochs)
@@ -190,14 +193,13 @@ def main():
             writer.add_scalar('Loss/train', running_loss / train_steps, epoch)
             writer.add_scalar('Acc/val', val_accurate, epoch)
 
-            # if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:  # Check if 'q' was pressed
-            #     user_input = sys.stdin.readline().strip()
-            #     if user_input == 'q':
-            #         print("Stopping training after this epoch.")
-            #         break
-
-            if msvcrt.kbhit():  # 检查是否有键盘输入
+            if system == 1 and msvcrt.kbhit():  # 检查是否有键盘输入
                 user_input = msvcrt.getch().decode('utf-8').strip()
+                if user_input == 'q':
+                    print("Stopping training after this epoch.")
+                    break
+            elif system == 0 and sys.stdin in select.select([sys.stdin], [], [], 0)[0]:  # Check if 'q' was pressed
+                user_input = sys.stdin.readline().strip()
                 if user_input == 'q':
                     print("Stopping training after this epoch.")
                     break
@@ -218,8 +220,9 @@ def main():
         model.eval()
         with torch.no_grad():
             for val_data in tqdm(test_loader):#validate_loader test_loader
-                val_images, val_labels = val_data
-                outputs = model(val_images.to(device))
+                time_seq, freq_seq, val_labels = val_data
+                img = torch.cat((time_seq, freq_seq), dim=-1).to(device)
+                outputs = model(img)
                 outputs = torch.softmax(outputs, dim=1)
                 outputs = torch.argmax(outputs, dim=1)
                 confusion.update(outputs.to("cpu").numpy(), val_labels.to("cpu").numpy())

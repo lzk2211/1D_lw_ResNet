@@ -143,3 +143,16 @@ def resnet18_vector_group(num_classes=1000, include_top=True):
 
 def resnet10_vector_group(num_classes=1000, include_top=True):
     return ResNet1D(BasicBlock1D, [1, 1, 1, 1], num_classes=num_classes, include_top=include_top, groups=32, width_per_group=4)
+
+
+# from torchsummary import summary
+# from thop import profile
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# model = resnet18_vector_group(num_classes=8, include_top=True)
+# model = model.to(device)
+
+# # summary(model, input_size=(3, 224))
+# inputs = torch.randn(1, 3, 224).to(device)
+# flops, params = profile(model, (inputs,))
+# print('flops: ', flops, 'params: ', params)

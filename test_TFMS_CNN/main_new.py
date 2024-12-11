@@ -17,6 +17,7 @@ import torchvision.models as models
 from resnet_vector_group import resnet18_vector_group, resnet10_vector_group
 from TFMS_CNN import TFMS_CNN_Case3
 from TFMS_CNN_kernel5 import TFMS_CNN_kernel5
+from TFMS_CNN_1024 import TFMS_CNN_1024
 
 from confusionMatrix import ConfusionMatrix
 
@@ -123,6 +124,8 @@ def main():
         model = TFMS_CNN_Case3(num_classes=args.class_num, dropout_rate=0.25)
     elif args.model == 'TFMS_CNN_kernel5':
         model = TFMS_CNN_kernel5(num_classes=args.class_num, dropout_rate=0.25)
+    elif args.model == 'TFMS_CNN_1024':
+        model = TFMS_CNN_1024(num_classes=args.class_num, dropout_rate=0.25)# ubuntu
     model.to(device)
 
     # This script is used to show the model structure

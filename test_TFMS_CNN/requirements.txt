@@ -1,0 +1,5 @@
+PrettyTable
+scikit-learn
+matplotlib
+tqdm
+tensorboard

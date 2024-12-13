@@ -1,7 +1,7 @@
 import os
 import sys
 import gc
-# import msvcrt
+import msvcrt
 import re
 
 import torch
@@ -57,7 +57,7 @@ def main():
 
     parser.add_argument('--class_num', type=int, default=10, help='class number')
     parser.add_argument('--model', type=str, default='TFMS_CNN_512', help='switch model')
-    parser.add_argument('--image_path', type=str, default='/root/autodl-tmp/lzk/D00/data_set_1024_1024', help='dataset path')
+    parser.add_argument('--image_path', type=str, default='F:\\D00\\data_set_1024_1024', help='dataset path')
     # parser.add_argument('--name', type=str, default='D01_1024_1024', help='project name')
     parser.add_argument('--T', type=int, default=50, help='sim steps')
 

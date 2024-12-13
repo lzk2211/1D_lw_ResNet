@@ -42,14 +42,14 @@ class TFMS_CNN_Case3(nn.Module):
         super(TFMS_CNN_Case3, self).__init__()
         
         # 卷积块超参数
-        kernel_size = 5
+        kernel_size = 7
         num_blocks = 3
         initial_filters = 16 # in paper is 16
-        padding = 2
+        padding = 3
 
         self.groups = groups
         
-        # 时域分支
+        # 时域分支 
         # self.time_branch = self._build_branch(BasicBlock1D, num_blocks, kernel_size, initial_filters, dropout_rate)
         
         # 频域分支

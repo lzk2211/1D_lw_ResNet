@@ -6,7 +6,7 @@
 
 ## Requirements
 
-1. Install `pytorch` and `torchvision` (we use `pytorch>=1.13.0` and `torchvision>=0.14.0`).
+1. Install `python` and `pytorch` (we use `pytorch>=2.4.0` and `python>=3.10`).
 2. `pip install -r requirements.txt`
 
 ## Run

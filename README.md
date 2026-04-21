@@ -56,3 +56,18 @@ project
 ├── test: Current test procedures
 ├── matlab: Some scrpit about matlab to process UAV time RF signal
 ```
+
+## Citation
+
+If you find this work useful for your research, please consider citing:
+
+```
+@inproceedings{liu20241d,
+  title={1D-LW-ResNet: High-Efficiency UAV Detector Based on RF Signals},
+  author={Liu, Zhenkun and Zhang, Zhiyue and Zhang, Yifei and Mu, Junsheng},
+  booktitle={International Conference on Information Processing and Network Provisioning},
+  pages={260--271},
+  year={2024},
+  organization={Springer}
+}
+```
